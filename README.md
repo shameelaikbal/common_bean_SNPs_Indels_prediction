@@ -8,7 +8,7 @@ Code and scripts used to generate results for "" Mohamedikbal et al.
 - Phenotype data for common bacterial blight retrieved from https://doi.org/10.3389/fpls.2024.1469381
 
 **Genotype data:**
-- WGS sequencing reads for Andean diversity panel obtained from NCBI-SRA https://doi.org/10.1002/tpg2.20523Digital Object Identifier (DOI) 
+- WGS sequencing reads for Andean diversity panel obtained from NCBI-SRA https://doi.org/10.1002/tpg2.20523 
 
 
 ## Analysis Pipeline
