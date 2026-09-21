@@ -1,4 +1,4 @@
-#downloading the 220 samples from NCBI
+#downloading the 214 samples for which I have CBB data from NCBI-SRA  BioProject PRJNA1112458, Wiersma et al. (2024)
 
 #get SRR_ID for this array task
 SRR_ID=$(sed -n "${SLURM_ARRAY_TASK_ID}p" srr_list.txt)
@@ -32,3 +32,13 @@ time srun -m block:block:block fastq-dump \
 #gzip and move to zipped directory
 cd "${OUTPUT_DIR}"
 mv "${SRR_ID}"_*.fastq.gz "${OUTPUT_ZIP}"/
+
+#once all the fastq files have been download, can do trimming using trimmomatic
+# i have given this as an array, and to make it run smooth, i have got the SRR names in a batch_sample_list.txt first and ran the following
+time srun -m block:block:block trimmomatic PE -threads 8 \
+  ${SAMPLE}_1.fastq.gz ${SAMPLE}_2.fastq.gz \
+  batch_trimmed_paired/${SAMPLE}_1_paired.fq.gz batch_trimmed_unpaired/${SAMPLE}_1_unpaired.fq.gz \
+  batch_trimmed_paired/${SAMPLE}_2_paired.fq.gz batch_trimmed_unpaired/${SAMPLE}_2_unpaired.fq.gz \
+  LEADING:10 TRAILING:10 SLIDINGWINDOW:4:15 MINLEN:40
+
+#the trimming parameters i have followed Wiersma et al 2024,
