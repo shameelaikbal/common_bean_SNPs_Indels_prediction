@@ -53,7 +53,63 @@ samtools faidx pangenome.fasta.gz
  module load gatk4/4.2.5.0--hdfd78af_0
  gatk CreateSequenceDictionary -R pangenome.fasta.gz #given as a job
 
- #next step is bwa-mem2 alignent to the single reference genome or pangenome fasta
+ #next step is bwa-mem2 alignent to the single reference genome or pangenome fasta and marking duplicates, given together in a single batchscript as array
+ # Define base directory
+BASE_DIR=
+
+# Paths
+# Set paths
+REF=./pangenome.fasta.gz
+FASTQ_DIR=$BASE_DIR
+BAM_DIR=$BASE_DIR/dedup_bam
+METRICS_DIR=$BASE_DIR/metrics
+LOGS_DIR=$BASE_DIR/logs
+SAMPLES=batch_sample_list.txt
+
+# Create output directories if they don’t exist
+mkdir -p "$BAM_DIR" "$METRICS_DIR" "$LOGS_DIR"
+
+# Get sample name
+SAMPLE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $SAMPLES)
+RG="@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tPL:ILLUMINA"
+
+# Output file
+SORTED_BAM=${SAMPLE}.sorted.bam
+
+# Run alignment
+echo "[$(date)] Starting BWA alignment for $SAMPLE"
+bwa-mem2 mem -t 32 -M -R "$RG" \
+  "$REF" \
+  "$FASTQ_DIR/${SAMPLE}_1_paired.fq.gz" "$FASTQ_DIR/${SAMPLE}_2_paired.fq.gz" \
+  2> "$LOGS_DIR/${SAMPLE}_bwa_mem2.log" | \
+  samtools sort -@ 32 -o "$SORTED_BAM" \
+  2> "$LOGS_DIR/${SAMPLE}_sort.log"
+
+# Check if sorted BAM was created
+if [[ ! -f "$SORTED_BAM" ]]; then
+  echo "[$(date)] ERROR: Sorted BAM not created for $SAMPLE"
+  exit 1
+fi
+
+# Run MarkDuplicates
+echo "[$(date)] Running MarkDuplicates for $SAMPLE"
+gatk MarkDuplicates \
+  I="$SORTED_BAM" \
+  O="$BAM_DIR/${SAMPLE}.dedup.bam" \
+  M="$METRICS_DIR/${SAMPLE}.dup_metrics.txt" \
+  2> "$LOGS_DIR/${SAMPLE}_markdup.log"
+
+# Check if dedup BAM was created
+if [[ ! -s "$BAM_DIR/${SAMPLE}.dedup.bam" ]]; then
+  echo "[$(date)] ERROR: Dedup BAM not created for $SAMPLE"
+  exit 1
+fi
+
+# Index the dedup BAM
+echo "[$(date)] Indexing BAM for $SAMPLE"
+samtools index "$BAM_DIR/${SAMPLE}.dedup.bam"
+
+echo "[$(date)] Done for $SAMPLE"
  
 
 
