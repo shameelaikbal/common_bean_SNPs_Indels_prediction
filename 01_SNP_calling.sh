@@ -111,7 +111,36 @@ samtools index "$BAM_DIR/${SAMPLE}.dedup.bam"
 
 echo "[$(date)] Done for $SAMPLE"
  
+#5.next step is gatk- creating gvcf for each sample
+WORKDIR=/
+REF=$WORKDIR/pangenome.fasta.gz
+SAMPLE_LIST=$WORKDIR/batch_sample_list.txt
 
+SAMPLE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" $SAMPLE_LIST)
+INBAM=$WORKDIR/dedup_bam/${SAMPLE}.dedup.bam
+OUTGVCF=$WORKDIR/gvcf/${SAMPLE}.g.vcf.gz
+
+# Output logs for completion status (change paths as needed)
+COMPLETE_LOG=$WORKDIR/gvcf/completed_samples.txt
+FAILED_LOG=$WORKDIR/gvcf/failed_samples.txt
+mkdir -p $(dirname $COMPLETE_LOG)
+
+echo "Processing $SAMPLE"
+
+# Run the GATK command and capture exit status
+if time srun -m block:block:block gatk --java-options "-Xmx16g" HaplotypeCaller \
+    -R $REF \
+    -I $INBAM \
+    -O $OUTGVCF \
+    -ERC GVCF
+then
+    echo "$SAMPLE" >> "$COMPLETE_LOG"
+    echo "SUCCESS: $SAMPLE completed."
+else
+    echo "$SAMPLE" >> "$FAILED_LOG"
+    echo "FAILED: $SAMPLE did not complete."
+    exit 1
+fi
 
 
 
