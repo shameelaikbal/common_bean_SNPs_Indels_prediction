@@ -142,5 +142,20 @@ else
     exit 1
 fi
 
+#6. next is genomicsdb import
+#before that need to make a sample map with the SRR name followed by file path to its corresponding gvcf file
+#create a tmp folder, but dont create the genomicsdb_chr01 folder, just leave the desired name, the tool creates this by itself
+module load gatk4/4.2.5.0--hdfd78af_0
+
+# Script to run (srun -m command recommended by Pawsey to pack threads)
+time srun -m block:block:block gatk --java-options "-Xmx10g" GenomicsDBImport \
+  --genomicsdb-workspace-path /scratch/pawsey0149/smohamed/common_bean/Feb2026/VCF/batch3/fastq/gzipped/batch1_trimmed_paired/gvcf/genomicsdb_chr01  \
+  --sample-name-map /scratch/pawsey0149/smohamed/common_bean/Feb2026/VCF/batch3/fastq/gzipped/batch1_trimmed_paired/gvcf/gatk_sample_map_abs.txt \
+  --batch-size 50 \
+  --tmp-dir /scratch/pawsey0149/smohamed/common_bean/Feb2026/VCF/batch3/fastq/gzipped/batch1_trimmed_paired/gvcf/tmp1 \
+  -L Chr01 \
+  --genomicsdb-shared-posixfs-optimizations true \
+  --reader-threads 8
+
 
 
