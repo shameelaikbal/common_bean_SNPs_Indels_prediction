@@ -157,5 +157,14 @@ time srun -m block:block:block gatk --java-options "-Xmx10g" GenomicsDBImport \
   --genomicsdb-shared-posixfs-optimizations true \
   --reader-threads 8
 
+#next step is GenotypeGVCFs
+module load gatk4/4.2.5.0--hdfd78af_0
+# Script to run (srun -m command recommended by Pawsey to pack threads)
+time srun -m block:block:block gatk --java-options "-Xmx10g" GenotypeGVCFs \
+  -R ./pangenome.fasta.gz \
+  -V gendb:///scratch/pawsey0149/smohamed/common_bean/Feb2026/VCF/batch3/fastq/gzipped/batch1_trimmed_paired/gvcf/genomicsdb_chr01 \
+  -O /scratch/pawsey0149/smohamed/common_bean/Feb2026/VCF/batch3/fasttq/gzipped/batch1_trimmed_paired/genotyped/genotyped_chr01.vcf.gz \
+  -L Chr01
+
 
 
